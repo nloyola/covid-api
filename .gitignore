@@ -1,0 +1,13 @@
+/vendor/
+/cache/
+logs/*
+!.gitkeep
+node_modules/
+tmp
+/.chrome/
+/coverage/
+/public/*.png
+/public/css
+.env
+public/index.html
+
