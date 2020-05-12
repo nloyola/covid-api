@@ -1,12 +1,36 @@
 {
-    "name": "biobank/covid-api",
-    "description": "Provides a REST API to Covid Data",
-    "type": "project",
-    "require": {
-        "slim/slim": "4.*",
-        "slim/psr7": "^1.1"
-    },
-    "scripts": {
-	    "start": "php -S 0.0.0.0:8088 -t public"
+  "name": "biobank/covid-api",
+  "description": "Provides a REST API to Covid Data",
+  "type": "project",
+  "require": {
+    "slim/slim": "4.*",
+    "slim/psr7": "^1.1",
+    "symfony/var-dumper": "^5.0",
+    "respect/validation": "^2.0",
+    "robmorgan/phinx": "^0.12.1",
+    "monolog/monolog": "^2.0",
+    "illuminate/database": "^7.10",
+    "vlucas/phpdotenv": "^4.1",
+    "bryanjhv/slim-session": "^4.0",
+    "symfony/yaml": "^5.0",
+    "php-di/php-di": "^6.1",
+    "selective/config": "^0.2.0",
+    "slim/twig-view": "^3.1"
+  },
+  "scripts": {
+    "post-install-cmd": [
+      "@php -r \"if (!file_exists('.env')) { copy('.env.example', '.env'); }; \""
+    ],
+    "init-database": [
+      "phinx rollback -t0",
+      "phinx migrate --verbose",
+      "phinx seed:run"
+    ],
+    "start": "php -S 0.0.0.0:8088 -t public"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
     }
+  }
 }
