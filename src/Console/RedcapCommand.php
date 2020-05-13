@@ -79,8 +79,7 @@ class RedcapCommand extends CliCommand {
       'type'    => 'flat'
     ]);
 
-    $patients = Patient::patientFromRedcapApi($records);
-    $this->varLog('===> patients: ', $patients);
+    Patient::patientFromRedcapApiRecords($records);
     return 0;
   }
 

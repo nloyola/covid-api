@@ -137,6 +137,7 @@ $settings['phinx'] = [
 ];
 
 $settings['commands'] = [
+  \App\Console\FakeCommand::class,
   \App\Console\RedcapCommand::class,
   \App\Console\WebAppSecret::class
 ];

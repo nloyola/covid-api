@@ -3,12 +3,11 @@
 namespace App\Utils;
 
 
-trait RedcapPatientConverter {
+trait RedcapCaseReportConverter {
 
   protected static function propertyOrNull($record, $property) {
     return property_exists($record, $property) ? $record->{$property} : null;
   }
-
 
   protected static function currentStatus(string $number) {
     if ($number == '2') {
@@ -19,30 +18,79 @@ trait RedcapPatientConverter {
     return null;
   }
 
-  protected static function sex(string $number) {
-    if ($number == '1') {
-      return 'male';
-    } else if ($number == '2') {
-      return 'female';
-    } else if ($number == '9') {
-      return 'unknown';
-    } else if ($number == '3') {
-      return 'other';
+  protected static function numberToGender(string $number, $formatNum = 1)
+  {
+    if ($formatNum == 2) {
+      switch ($number) {
+        case '1':
+          return 'male';
+        case '2':
+          return 'female';
+        case '3':
+          return 'unknown';
+        case '4':
+          return 'other';
+        default:
+          return null;
+      }
     }
-    return null;
+
+      switch ($number) {
+        case '1':
+          return 'male';
+        case '2':
+          return 'female';
+        case '3':
+          return 'other';
+        case '9':
+          return 'unknown';
+        default:
+          return null;
+      }
   }
 
-  protected static function numberToYesNo(string $number) {
-    if ($number == '0') {
-      return 'no';
-    } else if ($number == '1') {
-      return 'yes';
-    } else if ($number == '9') {
-      return 'unknown';
-    } else if ($number == '10') {
-      return 'not_applicable';
+  protected static function numberToGenderFromField($record, $field, $formatNum) {
+    $value = self::propertyOrNull($record, $field);
+    return $value ? self::numberToGender($value, $formatNum) : null;
+  }
+
+  protected static function numberToYesNo(string $number, $formatNum = 1) {
+    if ($formatNum == 2) {
+      switch ($number) {
+        case '1':
+          return 'no';
+        case '2':
+          return 'yes';
+        default:
+          return null;
+      }
     }
-    return null;
+
+    if ($formatNum == 3) {
+      switch ($number) {
+        case '1':
+          return 'no';
+        case '2':
+          return 'yes';
+        case '3':
+          return 'unknown';
+        default:
+          return null;
+      }
+    }
+
+    switch ($number) {
+      case '0':
+        return 'no';
+      case '1':
+        return 'yes';
+      case '9':
+        return 'unknown';
+      case '10':
+        return 'not_applicable';
+      default:
+          return null;
+    }
   }
 
   protected static function numberToYesNoAlt(string $number) {
@@ -146,6 +194,17 @@ trait RedcapPatientConverter {
     }
   }
 
+  protected static function numberToAffected(string $number) {
+    switch ($number) {
+      case '1': return 'covid_19_positive';
+      case '2': return 'covid_19_negative';
+      case '3': return 'not_tested';
+      case '4': return 'unknown';
+      case '5': return 'not_applicable';
+      default: return null;
+    }
+  }
+
   protected static function extractMedicalHistoryOther($record, $index) {
     $properties = [];
     switch ($index) {
@@ -212,7 +271,7 @@ trait RedcapPatientConverter {
     foreach ($properties as $new_property => $old_property) {
       $result[$new_property] = property_exists($record, $old_property) ? $record->{$old_property} : null;
     }
-    return $result;
+    return (object) $result;
   }
 
   protected static function extractConcominantMedications($record, $index) {
@@ -308,6 +367,137 @@ trait RedcapPatientConverter {
     $result['dose_frequency']  = self::numberToDoseFrequency($result['dose_frequency']);
     $result['dose_stop_check'] = self::numberToYesNo($result['dose_stop_check']);
 
-    return $result;
+    return (object) $result;
   }
+
+  protected static function numberToSwabResult(string $number, $formatNum = 1) {
+    if ($formatNum == 2) {
+      switch ($number) {
+        case '1': return 'positive';
+        case '2': return 'negative';
+        case '3': return 'not_done';
+        case '4': return 'indeterminate';
+        default:
+          return null;
+      }
+    }
+
+    switch ($number) {
+      case '1': return 'positive';
+      case '2': return 'negative';
+      case '3': return 'pending';
+      case '4': return 'not_done';
+      case '5': return 'indeterminate';
+      default: return null;
+    }
+  }
+
+  protected static function extractSwabSample($record, $index) {
+    $properties = [];
+    switch ($index) {
+      case 1:
+        $properties = [
+          'swab_id'         => 'spec_npswab1id',
+          'swab_date'       => 'spec_npswab1_dt',
+          'processing_date' => 'np_processing',
+          'result'          => 'spec_npswab1stateresult'
+        ];
+        break;
+
+      case 2:
+        $properties = [
+          'swab_id'         => 'spec_npswab1id_2',
+          'swab_date'       => 'spec_npswab2_dt',
+          'processing_date' => 'np_processing_2',
+          'result'          => 'spec_npswab2stateresult'
+        ];
+        break;
+
+      case 3:
+        $properties = [
+          'swab_id'         => 'spec_npswab3id',
+          'swab_date'       => 'spec_npswab3_dt',
+          'processing_date' => 'np_processing_3',
+          'result'          => 'spec_npswab3stateresult'
+        ];
+        break;
+
+      default:
+        throw new \Error("invalid index for concominant medication: $index");
+    }
+
+    $result = [];
+    foreach ($properties as $new_property => $old_property) {
+      $result[$new_property] = property_exists($record, $old_property) ? $record->{$old_property} : null;
+    }
+
+    $result['result']  = self::numberToSwabResult($result['result']);
+    return (object) $result;
+  }
+
+  protected static function extractBloodSample($record, $index) {
+    $properties = [];
+    switch ($index) {
+      case 1:
+        $properties = [
+          'blood_id' => 'blood_id',
+          'blood_date' => 'blood_date',
+          'blood_processing' => 'blood_processing',
+        ];
+        break;
+
+      case 2:
+      case 3:
+      case 4:
+      case 5:
+      case 6:
+      case 7:
+      case 8:
+      case 9:
+      case 10:
+        $properties = [
+          'blood_id'         => "blood_id_$index",
+          'blood_date'       => "blood_date_$index",
+          'blood_processing' => "blood_processing_$index",
+        ];
+        break;
+
+      default:
+        throw new \Error("invalid index for concominant medication: $index");
+    }
+
+    $result = [];
+    foreach ($properties as $new_property => $old_property) {
+      $result[$new_property] = property_exists($record, $old_property) ? $record->{$old_property} : null;
+    }
+
+    return (object) $result;
+  }
+
+  protected static function numberToCaseReportComplete(string $number) {
+    switch ($number) {
+      case '0': return 'incomplete';
+      case '1': return 'unverified';
+      case '2': return 'complete';
+      default: return null;
+    }
+  }
+
+  protected static function numberToTestResults(string $number) {
+    switch ($number) {
+      case '1': return 'positive';
+      case '2': return 'negative';
+      default: return null;
+    }
+  }
+
+  protected static function numberToPracticeComplete(string $number) {
+    switch ($number) {
+      case '0': return 'incomplete';
+      case '1': return 'unverified';
+      case '2': return 'complete';
+      default: return null;
+    }
+  }
+
 }
