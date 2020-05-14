@@ -31,8 +31,8 @@ return function (App $app) {
   $errorHandler->registerErrorRenderer('application/json', JsonErrorRenderer::class);
 
   $app->add(new \Slim\Middleware\Session([
-    'name' => 'covid_collaboration',
+    'name'        => 'covid_collaboration',
     'autorefresh' => true,
-    'lifetime' => '1 hour'
+    'lifetime'    => '1 hour'
   ]));
 };

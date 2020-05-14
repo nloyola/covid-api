@@ -2,12 +2,15 @@
 
 use DI\ContainerBuilder;
 use Illuminate\Database\Capsule\Manager as Capsule;
-use Respect\Validation\Validator as v;
+use Respect\Validation\Factory as RVFactory;
 use Slim\App;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-//v::with('App\\Validation\\Rules\\');
+RVFactory::setDefaultInstance(
+  (new RVFactory())->withRuleNamespace('App\\Validation\\Rules')
+                   ->withExceptionNamespace('App\\Validation\\Exceptions')
+);
 
 $containerBuilder = new ContainerBuilder();
 

@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Auth\Auth;
+use App\Auth\JwtAuth;
 use App\Utils\LoggerFuncs;
 use App\Dto\UserDto;
-use App\Factory\LoggerFactory;
+use App\Factories\LoggerFactory;
 use App\Models\PasswordReset;
 use App\Models\User;
 use App\Validation\ValidationError;
@@ -23,17 +23,17 @@ class UserService
   public function __construct(
     LoggerFactory $loggerFactory,
     Validator $validator,
-    Auth $auth,
+    JwtAuth $jwtAuth,
     MailService $mailService
   ) {
     $this->logger = $loggerFactory->createInstance('UserService');
     $this->validator = $validator;
-    $this->auth = $auth;
+    $this->jwtAuth = $jwtAuth;
     $this->mailService = $mailService;
 
     $this->propertyValidators = [
-      'version'        => v::numeric()->intVal()->min(0),
-      'slug' => v::noWhitespace()->notEmpty()->slug()->userSlugExists(),
+      'version'        => v::number()->intVal()->min(0),
+      'slug'           => v::noWhitespace()->notEmpty()->slug()->userSlugExists(),
       'name'           => v::notEmpty(),
       'email'          => v::noWhitespace()->notEmpty()->email(),
       'emailAvailable' => v::noWhitespace()->notEmpty()->email()->emailAvailable(),
@@ -129,7 +129,7 @@ class UserService
     }
 
     ['email' => $email, 'password' => $password] = $values;
-    if (!$this->auth->attempt($email, $password)) {
+    if (!$this->attempt($email, $password)) {
       return new ValidationError('unauthorized');
     }
 
@@ -138,8 +138,14 @@ class UserService
       return new ValidationError("user with email not found: ${email}");
     }
 
-    $token = $this->auth->createToken($user);
-    return new ValidationResult(['token' => $token, 'user' => $user]);
+    $token = $this->jwtAuth->createJwt($user->id, $user->name);
+    $lifetime = $this->jwtAuth->getLifetime();
+
+    return new ValidationResult([
+      'access_token' => $token,
+      'token_type' => 'Bearer',
+      'expires_in' => $lifetime
+    ]);
   }
 
   public function userLogout()
@@ -393,5 +399,14 @@ PASSWORD_RESET_EMAIL_BODY_END;
     if ($v->failed()) {
       $this->logger->info('mailer: ' . print_r($v->errors(0), true));
     }
+  }
+
+  private function attempt($email, $password): bool {
+    $user = User::where('email', $email)->first();
+    if (!$user) {
+      return false;
+    }
+
+    return password_verify($password, $user->password);
   }
 }

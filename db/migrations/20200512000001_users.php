@@ -6,11 +6,11 @@ class Users extends AbstractMigration {
 
   public function change() {
     $this->table('users')
-      ->addColumn('version', 'biginteger', [ 'default' => 0 ])
-      ->addColumn('slug',            'string', [ 'limit' => 100 ])
-      ->addColumn('name',            'string', [ 'null' => true ])
-      ->addColumn('email',           'string')
-      ->addColumn('password',        'string')
+      ->addColumn('version',  'biginteger', [ 'default' => 0 ])
+      ->addColumn('slug',     'string', [ 'limit' => 100 ])
+      ->addColumn('name',     'string', [ 'null' => true ])
+      ->addColumn('email',    'string')
+      ->addColumn('password', 'string')
       ->addTimestamps()
       ->create();
 

@@ -1,15 +1,13 @@
 <?php
 
-use App\Middleware\TokenValidation;
 use App\Controllers\AuthController;
 use App\Controllers\UsersController;
 use App\Controllers\RedcapController;
+use App\Middleware\JwtMiddleware;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 
 return function(App $app) {
-  $tokenValidation = $app->getContainer()->get(TokenValidation::class);
-
   $app->get('/', \App\Actions\HomeAction::class);
 
   $app->group('/api/auth', function (RouteCollectorProxy $group) {
@@ -24,8 +22,6 @@ return function(App $app) {
     $group->group('/auth', function (RouteCollectorProxy $group) {
 
       $group->post('/auth', AuthController::class . ':postAuth');
-
-      $group->post('/logout', AuthController::class . ':postLogout');
     });
 
     $group->group('/users', function (RouteCollectorProxy $group) {
@@ -40,5 +36,17 @@ return function(App $app) {
       $group->get('', RedcapController::class . ':getReports');
     });
 
-  })->add($tokenValidation);
+  })->add(JwtMiddleware::class);
+
+  $app->group('/api', function (RouteCollectorProxy $group) {
+
+    $group->group('/users', function (RouteCollectorProxy $group) {
+
+      $group->post('/forgotpass', UsersController::class . ':postForgotPassword');
+
+      $group->post('/passreset', UsersController::class . ':postPasswordReset');
+
+    });
+
+  });
 };

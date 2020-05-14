@@ -2,7 +2,7 @@
 
 namespace App\Controllers;
 
-use App\Factory\LoggerFactory;
+use App\Factories\LoggerFactory;
 use App\Services\PaginatedResult;
 use App\Validation\Validation;
 use Psr\Http\Message\ResponseInterface;
@@ -21,9 +21,14 @@ abstract class Controller {
                                   Validation $validation,
                                   int $errorStatus) {
     if ($validation->failed()) {
-      return $response->withStatus($errorStatus)->withJson([ 'errors' => $validation->errors() ]);
+      $payload = json_encode([ 'errors' => $validation->errors() ]);
+      $response->getBody()->write($payload);
+      return $response->withHeader('Content-Type', 'application/json')->withStatus($errorStatus);
     }
-    return $response->withJson($validation->value());
+
+    $payload = json_encode($validation->value());
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
   }
 
   protected function pdfResponse(ResponseInterface $response,
@@ -42,18 +47,23 @@ abstract class Controller {
                                            Validation $validation,
                                            int $erroStatus) {
     if ($validation->failed()) {
-      return $response->withStatus($errorStatus)->withJson([ 'errors' => $validation->errors() ]);
+      $payload = json_encode([ 'errors' => $validation->errors() ]);
+      $response->getBody()->write($payload);
+      return $response->withHeader('Content-Type', 'application/json')->withStatus($errorStatus);
     }
     $value = $validation->value();
     if (!$value instanceof PaginatedResult) {
       throw new \Error('expected PaginatedResult in validation');
     }
-    return $response->withJson([
+
+    $payload = json_encode([
       'data' => $value->data(),
       'meta' => [
         'pagination' => $value->pagination()
       ]
     ]);
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
   }
 
   protected function getBaseUrl(Request $request): string

@@ -3,9 +3,9 @@
 namespace App\Controllers;
 
 use App\Utils\LoggerFuncs;
-use App\Factory\LoggerFactory;
-use App\Cookies\Cookies;
+use App\Factories\LoggerFactory;
 use App\Services\UserService;
+use App\Validation\ValidationError;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 
@@ -20,51 +20,52 @@ class AuthController extends Controller {
   }
 
   public function postSignup(Request $request, Response $response, $args) {
-    $validation = $this->userService->addUser($request->getParams());
+    $validation = $this->userService->addUser($request->getParsedBody());
     return $this->jsonResponse($response, $validation, 400);
   }
 
   public function postLogin(Request $request, Response $response, $args) {
-    $validation = $this->userService->userLogin($request->getParams());
+    $validation = $this->userService->userLogin($request->getParsedBody());
     if ($validation->failed()) {
       $errors = join(",", $validation->errors());
       if (strpos($errors, "unauthorized") >= 0) {
         return $response->withStatus(401);
       }
-      return $response->withStatus(400)->withJson($validation->errors());
+      return $this->jsonResponse($response, $validation, 400);
     }
 
-    ["token" => $token, "user" => $user] = $validation->value();
-    $c = new Cookies($request, $response);
-    $response = $c->set("XSRF-TOKEN", $token);
-
-    return $response->withJson([
-      "slug"  => $user->slug,
-      "name"  => $user->name,
-      "email" => $user->email
-    ]);
+    $payload = json_encode($validation->value());
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
   }
 
   public function postAuth(Request $request, Response $response, $args) {
-    $userId = $request->getAttribute("userId");
+    $userId = $request->getAttribute("uid");
     $validation = $this->userService->userById($userId);
     if ($validation->failed()) {
-      return $response->withStatus(401)->withJson([ 'message' => 'invalid token' ]);
+      $validation = new ValidationError([ 'message' => 'invalid token' ]);
+      return $this->jsonResponse($response, $validation, 400);
     }
 
     $user = $validation->value();
-    return $response->withJson([
+    $payload = json_encode([
       "slug"  => $user->slug,
       "name" => $user->name,
       "email" => $user->email
     ]);
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
   }
 
-  public function postLogout(Request $request, Response $response, $args) {
-    $this->userService->userLogout();
-    $c = new Cookies($request, $response);
-    $c->set("XSRF-TOKEN", "");
-    return $response->withJson([ "message" => "ok" ]);
-  }
+  // Logout not supported on server side when using JWT
+  //
+  // client should delete token from local storage
+
+  // public function postLogout(Request $request, Response $response, $args) {
+  //   $this->userService->userLogout();
+  //   $payload = json_encode([ "message" => "ok" ]);
+  //   $response->getBody()->write($payload);
+  //   return $response->withHeader('Content-Type', 'application/json');
+  // }
 
 }

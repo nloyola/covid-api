@@ -2,11 +2,11 @@
 
 //declare(strict_types=1);
 
-use App\Auth\Auth;
+use App\Auth\JwtAuth;
 use App\Factories\LoggerFactory;
-use App\Middleware\TokenValidation;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
 use Selective\Config\Configuration;
 use Slim\App;
 use Slim\Factory\AppFactory;
@@ -101,10 +101,19 @@ return [
     return $capsule;
   },
 
-  TokenValidation::class  => function (ContainerInterface $container) {
-    $loggerFactory = $container->get(LoggerFactory::class);
-    $auth = $container->get(Auth::class);
-    $tokenValidation = new TokenValidation($loggerFactory, $auth);
-    return $tokenValidation;
+  ResponseFactoryInterface::class => function (ContainerInterface $container) {
+    return $container->get(App::class)->getResponseFactory();
   },
+
+  JwtAuth::class => function (ContainerInterface $container) {
+    $config = $container->get(Configuration::class);
+
+    $issuer = $config->getString('jwt.issuer');
+    $lifetime = $config->getInt('jwt.lifetime');
+    $privateKey = $config->getString('jwt.private_key');
+    $publicKey = $config->getString('jwt.public_key');
+
+    return new JwtAuth($issuer, $lifetime, $privateKey, $publicKey);
+  },
+
 ];
