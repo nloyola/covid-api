@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<phpunit
+    bootstrap="test/bootstrap.php"
+    colors="true"
+    stderr="true">
+  <testsuites>
+    <testsuite name="Covid Survaillance Collaboration">
+      <directory>./test</directory>
+    </testsuite>
+  </testsuites>
+  <filter>
+    <whitelist processUncoveredFilesFromWhitelist="true">
+      <directory suffix=".php">src</directory>
+      <exclude>
+        <directory suffix=".php">src/Console</directory>
+      </exclude>
+    </whitelist>
+  </filter>
+  <logging>
+    <log type="coverage-html" target="coverage/report" lowUpperBound="35"
+         highLowerBound="70"/>
+  </logging>
+  <php>
+    <env name="MODE" value="testing"/>
+    <env name="DB_DATABASE" value=":memory:"/>
+    <env name="DB_CONNECTION" value="sqlite"/>
+    <env name="APP_LOG_STREAM" value="test"/> <!-- configures monolog to output to stdout -->
+  </php>
+</phpunit>

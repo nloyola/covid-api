@@ -2,7 +2,7 @@
 
 namespace App\Controllers;
 
-use App\LoggerFuncs;
+use App\Utils\LoggerFuncs;
 use App\Factory\LoggerFactory;
 use App\Cookies\Cookies;
 use App\Services\UserService;

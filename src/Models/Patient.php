@@ -13,7 +13,134 @@ class Patient
   use RedcapCaseReportConverter;
   use RedcapPracticeConverter;
 
-  public function hasExisitingCondition(): bool
+  public static $covid19Status = [ 'positive', 'negative' ];
+  public static $genders = [ 'unknown', 'other', 'female', 'male' ];
+  public static $yesNo        = [ 'yes', 'no'];
+  public static $yesNoUnknown = [ 'yes', 'no', 'unknown'];
+  public static $medicalHistoryStatus = ['resolved', 'ongoing_with_treatment', 'ongoing_without_treatment'];
+  public static $examination = [
+    'normal',
+    'abnormal_not_clinically_significant',
+    'abnormal_clinically_significant',
+    'not_assessed'
+  ];
+
+  public static $doseUnit = [
+    'application',
+    'cap',
+    'mg',
+    'min',
+    'mL',
+    'puff',
+    'softgel',
+    'spray',
+    'tab',
+    'unit',
+    'vial',
+  ];
+
+  public static $doseRoute = [
+    'GT',
+    'NG',
+    'TO',
+    'IM',
+    'IV',
+    'NAS',
+    'PO',
+    'IN',
+    'SQ',
+    'RE',
+    'IH',
+  ];
+
+  public static $doseFrequency = [
+    'QD',
+    'BID',
+    'TID',
+    'QID',
+    'PRN',
+    'QMon/Wed/Fri',
+    'QMonth',
+    'Once',
+  ];
+
+  public static $symptomStatus = [
+    'symptomatic',
+    'asymptomatic',
+    'unknown',
+  ];
+
+  public static $symptomResolution = [
+    'symptom_resolved_unknown_date',
+    'still_symptomatic',
+    'unknown_symptom_status',
+    'symptoms_resolved_with_date',
+  ];
+
+  public static $affected = [
+    'covid_19_positive',
+    'covid_19_negative',
+    'not_tested',
+    'unknown',
+    'not_applicable',
+    ];
+
+  public static $swabResults = [
+    'positive',
+    'negative',
+    'pending',
+    'not_done',
+    'indeterminate',
+  ];
+
+  public static $reportComplete = [
+    'incomplete',
+    'unverified',
+    'complete',
+  ];
+
+  public function __clone() {
+    $this->medical_history              = clone $this->medical_history;
+    $this->relevant_history             = array_merge([],  $this->relevant_history);
+    $this->physical_exam                = clone $this->physical_exam;
+    $this->concomitant_medications      = array_merge([], $this->concomitant_medications);
+    $this->symptoms                     = clone $this->symptoms;
+    $this->other_symptoms               = array_merge([], $this->other_symptoms);
+    $this->affected_family_members      = clone $this->affected_family_members;
+    $this->nasopharyngleal_swab_samples = array_merge([], $this->nasopharyngleal_swab_samples);
+    $this->blood_samples                = array_merge([], $this->blood_samples);
+  }
+
+  public function isCovid19Positive(): bool {
+    return $this->current_status == 'positive';
+  }
+
+  public function isCovid19Negative(): bool {
+    return $this->current_status == 'negative';
+  }
+
+  public function hasGenderMale(): bool {
+    return $this->sex == 'male';
+  }
+
+  public function hasGenderFemale(): bool {
+    return $this->sex == 'female';
+  }
+
+  public function hasGenderOther(): bool {
+    return $this->sex == 'other';
+  }
+
+  public function hasGenderUnknown(): bool {
+    return $this->sex == 'unknown';
+  }
+
+  public function symptomatic(): bool
+  {
+    return $this->symptoms->status == 'symptomatic';
+  }
+
+  public function hasComorbidity(): bool
   {
     if (!property_exists($this, 'medical_history')) {
       throw new \Error('no medical history in case report');
@@ -53,7 +180,49 @@ class Patient
       return $c || $i;
     });
 
-    return $reduced || $this->other_disease != null;
+    return $reduced || count($this->relevant_history) > 0;
+  }
+
+  public function abnormalPhisicalExam(): bool {
+    if (!property_exists($this, 'physical_exam')) {
+      throw new \Error('no physical exam in case report');
+    }
+
+    $possibleExamItems = array_map(
+      function ($property) {
+        return $this->physical_exam->{$property} == 'abnormal_clinically_significant';
+      },
+      [
+        'general_appearance',
+        'lungs_chest',
+        'skin',
+        'head_ears_eyes_nose_throat',
+        'neck',
+        'lymph_nodes',
+        'genitourinary',
+        'heart',
+        'mouth',
+        'abdomen_gastrointestinal',
+        'extremities',
+        'neurological',
+        'musculoskeletal',
+        'thyroid',
+        'back_spinal',
+        'external_genitalia'
+      ]);
+
+    $reduced =  array_reduce($possibleExamItems, function ($c, $i) {
+      return $c || $i;
+    });
+
+    return $reduced;
+  }
+
+  public function testedPositive(): bool {
+    $filtered = array_filter($this->nasopharyngleal_swab_samples, function ($sample) {
+      return $sample->result == 'positive';
+    });
+    return count($filtered) > 0;
   }
 
   public static function fromStdClass(stdClass $record)
@@ -167,16 +336,6 @@ class Patient
       'abdom'                => self::numberToYesNo($record->abdom_yn),
       'diarrhea'             => self::numberToYesNo($record->diarrhea_yn),
       'anosmia'              => self::numberToYesNo($record->anosmia_yn),
-      'other_symptoms'       => array_filter(
-        [
-          self::propertyOrNull($record, 'othersym1_spec'),
-          self::propertyOrNull($record, 'othersym2_spec'),
-          self::propertyOrNull($record, 'othersym3_spec')
-        ],
-        function ($v) {
-          return $v !== null;
-        }
-      ),
       'pneumonia'            => self::numberToYesNo($record->pna_yn),
       'acute_resp_distress'  => self::numberToYesNo($record->acuterespdistress_yn),
       'ards_date'            => self::propertyOrNull($record, 'ards_date'),
@@ -198,6 +357,17 @@ class Patient
       'death_date'           => self::propertyOrNull($record, 'death_dt'),
       'death_date_unknown'   => self::propertyOrNull($record, 'death_dt') == '1' ? 'unknown' : null,
     ];
+
+    $instance->other_symptoms = array_filter(
+      [
+        self::propertyOrNull($record, 'othersym1_spec'),
+        self::propertyOrNull($record, 'othersym2_spec'),
+        self::propertyOrNull($record, 'othersym3_spec')
+      ],
+      function ($v) {
+          return $v !== null;
+      }
+    );
 
     $instance->affected_family_members = (object) [
       'mother'        => self::numberToAffected($record->mother),
@@ -235,55 +405,6 @@ class Patient
 
     $instance->case_report_form_patient_data_complete =
       self::numberToCaseReportComplete($record->case_report_form_patient_data_complete);
-
-    /*
-    $instance->practice = (object) [
-      'first_name'      => self::propertyOrNull($record, 'first_name'),
-      'middle_name'     => self::propertyOrNull($record, 'middle_name'),
-      'surname'         => self::propertyOrNull($record, 'surname'),
-      'gender'          => self::numberToGenderFromField($record, 'gender', 2),
-      'race'            => self::numberToRace($record->race),
-      'test_results'    => self::numberToTestResults($record->race),
-      'first_test_date' => self::propertyOrNull($record, 'first_test_date'),
-      'positive_test_date' => self::propertyOrNull($record, 'positive_test_date'),
-      'past_medical_history' => [
-        self::extractMedicalHistory($record, 1),
-        self::extractMedicalHistory($record, 2),
-        self::extractMedicalHistory($record, 3),
-      ],
-      'concomitant_medications' => [
-        self::extractPracticeConcominantMedications($record, 1),
-        self::extractPracticeConcominantMedications($record, 2),
-      ],
-      'symptoms' => (object) [
-        'did_patient_have_pneumonia' => self::numberToYesNo($record->did_patient_have_pneumonia, 3),
-        'did_patient_have_ards'      => self::numberToYesNo($record->did_patient_have_ards, 2),
-        'was_patient_admitted_to_ic' => self::numberToYesNo($record->was_patient_admitted_to_ic, 3),
-        'did_the_patient_die_as_a_r' => self::numberToYesNo($record->did_the_patient_die_as_a_r, 3),
-      ],
-      'swab_samples' => (object) [
-        'np_swab_specimen_id_1' => self::propertyOrNull($record, 'np_swab_specimen_id_1'),
-        'np_swab_results_1' => self::numberToSwabResult($record->np_swab_results_1, 2),
-      ],
-      'blood_samples' => (object) [
-        'blood_sample_specimen_id_1' => self::propertyOrNull($record, 'blood_sample_specimen_id_1'),
-        'blood_sample_collection_da' => self::propertyOrNull($record, 'blood_sample_collection_da'),
-        'blood_sample_processing_da' => self::propertyOrNull($record, 'blood_sample_processing_da')
-      ],
-      'practice_complete' => self::numberToPracticeComplete($record->practice_complete)
-    ];
-
-    $instance->practice->other_symptoms = array_filter(
-      [
-        self::propertyOrNull($record, 'symptom_1'),
-        self::propertyOrNull($record, 'symptom_2'),
-        self::propertyOrNull($record, 'symptom_3'),
-        self::propertyOrNull($record, 'symptom_4'),
-      ],
-      function ($v) {
-        return $v !== null;
-      });
-    */
 
     return $instance;
   }

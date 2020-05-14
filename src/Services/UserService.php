@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Auth\Auth;
-use App\LoggerFuncs;
+use App\Utils\LoggerFuncs;
 use App\Dto\UserDto;
 use App\Factory\LoggerFactory;
 use App\Models\PasswordReset;

@@ -2,7 +2,7 @@
 
 namespace App\Controllers;
 
-use App\LoggerFuncs;
+use App\Utils\LoggerFuncs;
 use App\Factory\LoggerFactory;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
