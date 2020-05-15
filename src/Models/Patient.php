@@ -13,90 +13,35 @@ class Patient
   use RedcapCaseReportConverter;
   use RedcapPracticeConverter;
 
-  public static $covid19Status = [ 'positive', 'negative' ];
-  public static $genders = [ 'unknown', 'other', 'female', 'male' ];
-  public static $yesNo        = [ 'yes', 'no'];
-  public static $yesNoUnknown = [ 'yes', 'no', 'unknown'];
-  public static $medicalHistoryStatus = ['resolved', 'ongoing_with_treatment', 'ongoing_without_treatment'];
-  public static $examination = [
-    'normal',
-    'abnormal_not_clinically_significant',
-    'abnormal_clinically_significant',
-    'not_assessed'
-  ];
-
-  public static $doseUnit = [
-    'application',
-    'cap',
-    'mg',
-    'min',
-    'mL',
-    'puff',
-    'softgel',
-    'spray',
-    'tab',
-    'unit',
-    'vial',
-  ];
-
-  public static $doseRoute = [
-    'GT',
-    'NG',
-    'TO',
-    'IM',
-    'IV',
-    'NAS',
-    'PO',
-    'IN',
-    'SQ',
-    'RE',
-    'IH',
-  ];
-
-  public static $doseFrequency = [
-    'QD',
-    'BID',
-    'TID',
-    'QID',
-    'PRN',
-    'QMon/Wed/Fri',
-    'QMonth',
-    'Once',
-  ];
-
-  public static $symptomStatus = [
-    'symptomatic',
-    'asymptomatic',
-    'unknown',
-  ];
-
-  public static $symptomResolution = [
-    'symptom_resolved_unknown_date',
-    'still_symptomatic',
-    'unknown_symptom_status',
-    'symptoms_resolved_with_date',
-  ];
-
-  public static $affected = [
-    'covid_19_positive',
-    'covid_19_negative',
-    'not_tested',
-    'unknown',
-    'not_applicable',
-    ];
-
-  public static $swabResults = [
-    'positive',
-    'negative',
-    'pending',
-    'not_done',
-    'indeterminate',
-  ];
-
   public static $reportComplete = [
     'incomplete',
     'unverified',
     'complete',
+  ];
+
+  public static $comorbidities =
+  [
+    'cld',
+    'diabetes',
+    'cvd',
+    'prior_myocardial_infarctio',
+    'prior_coronary_artery_bypa',
+    'prior_percutaneous_coronar',
+    'renaldis',
+    'liverdis',
+    'immsupp',
+    'hyp',
+    'hypertension',
+    'hiv',
+    'cerebrovascular_disease',
+    'prior_stroke',
+    'obesity',
+    'dyslipidemia',
+    'pregnant',
+    'smoke_curr',
+    'smoke_former',
+    'has_other_disease',
+    'hba1c',
   ];
 
   public function __clone() {
@@ -112,32 +57,39 @@ class Patient
   }
 
   public function isCovid19Positive(): bool {
-    return $this->current_status == 'positive';
+    return $this->current_status == TestStatus::Positive;
   }
 
   public function isCovid19Negative(): bool {
-    return $this->current_status == 'negative';
+    return $this->current_status == TestStatus::Negative;
   }
 
   public function hasGenderMale(): bool {
-    return $this->sex == 'male';
+    return $this->sex == Gender::Male;
   }
 
   public function hasGenderFemale(): bool {
-    return $this->sex == 'female';
+    return $this->sex == Gender::Female;
   }
 
   public function hasGenderOther(): bool {
-    return $this->sex == 'other';
+    return $this->sex == Gender::Other;
   }
 
   public function hasGenderUnknown(): bool {
-    return $this->sex == 'unknown';
+    return $this->sex == Gender::Unknown;
+  }
+
+  /**
+   * @param Gender $gender
+   */
+  public function hasGender($gender): bool {
+    return $this->sex == $gender;
   }
 
   public function symptomatic(): bool
   {
-    return $this->symptoms->status == 'symptomatic';
+    return $this->symptoms->status == SymptomStatus::Symptomatic;
   }
 
   public function hasComorbidity(): bool
@@ -148,32 +100,9 @@ class Patient
 
     $conditions = array_map(
       function ($property) {
-        return $this->medical_history->{$property} == 'yes';
+        return $this->medical_history->{$property} == YesNoUnknown::Yes;
       },
-      [
-        'cld',
-        'diabetes',
-        'cvd',
-        'prior_myocardial_infarctio',
-        'prior_coronary_artery_bypa',
-        'prior_coronary_artery_bypa',
-        'prior_percutaneous_coronar',
-        'renaldis',
-        'liverdis',
-        'immsupp',
-        'hyp',
-        'hypertension',
-        'hiv',
-        'cerebrovascular_disease',
-        'prior_stroke',
-        'obesity',
-        'dyslipidemia',
-        'pregnant',
-        'smoke_curr',
-        'smoke_former',
-        'has_other_disease',
-        'hba1c',
-      ]
+      self::$comorbidities
     );
 
     $reduced =  array_reduce($conditions, function ($c, $i) {
@@ -220,7 +149,7 @@ class Patient
 
   public function testedPositive(): bool {
     $filtered = array_filter($this->nasopharyngleal_swab_samples, function ($sample) {
-      return $sample->result == 'positive';
+      return $sample->result == SwabResults::Positive;
     });
     return count($filtered) > 0;
   }
@@ -229,45 +158,48 @@ class Patient
   {
     $instance = new self();
 
+    //\App\Utils\Dump::dump($record);
+
+    // FIXME: add age once available from RedCAP
+
     $instance->record_id          = $record->record_id;
-    $instance->phn                = $record->phn;
-    $instance->current_status     = self::currentStatus($record->current_status);
+    $instance->phn                = self::propertyOrNull($record, 'phn');
+    $instance->current_status     = new TestStatus($record->current_status);
     $instance->testing_date       = self::propertyOrNull($record, 'testing_date');
     $instance->positive_test_date = self::propertyOrNull($record, 'positive_test_date');
-    $instance->sex                = self::numberToGender($record->sex_324500);
-    $instance->bloodtype          = self::numberToBloodType($record->bloodtype);
+    $instance->sex                = new Gender($record->sex_324500);
+    $instance->bloodtype          = new BloodTypes($record->bloodtype);
 
     $instance->medical_history = (object) [
-      'cld'                        => self::numberToYesNo($record->cld_yn),
-      'diabetes'                   => self::numberToYesNo($record->diabetes_yn),
-      'cvd'                        => self::numberToYesNo($record->cvd_yn),
-      'prior_myocardial_infarctio' => self::numberToYesNo($record->prior_myocardial_infarctio),
-      'prior_coronary_artery_bypa' => self::numberToYesNo($record->prior_coronary_artery_bypa),
-      'prior_coronary_artery_bypa' => self::numberToYesNo($record->prior_coronary_artery_bypa),
-      'prior_percutaneous_coronar' => self::numberToYesNo($record->prior_percutaneous_coronar),
-      'renaldis'                   => self::numberToYesNo($record->renaldis_yn),
-      'liverdis'                   => self::numberToYesNo($record->liverdis_yn),
-      'immsupp'                    => self::numberToYesNo($record->immsupp_yn),
-      'hyp'                        => self::numberToYesNo($record->hyp_yn),
-      'hypertension'               => self::numberToYesNo($record->hypertension_yn),
-      'hiv'                        => self::numberToYesNo($record->hiv),
-      'cerebrovascular_disease'    => self::numberToYesNo($record->cerebrovascular_disease),
-      'prior_stroke'               => self::numberToYesNo($record->prior_stroke),
-      'obesity'                    => self::numberToYesNo($record->obesity),
-      'dyslipidemia'               => self::numberToYesNo($record->dyslipidemia),
-      'pregnant'                   => self::numberToYesNo($record->pregnant_yn),
-      'smoke_curr'                 => self::numberToYesNo($record->smoke_curr_yn),
-      'smoke_former'               => self::numberToYesNo($record->smoke_former_yn),
-      'has_other_disease'          => self::numberToYesNo($record->otherdis_yn),
+      'cld'                        => new YesNoUnknown($record->cld_yn),
+      'diabetes'                   => new YesNoUnknown($record->diabetes_yn),
+      'cvd'                        => new YesNoUnknown($record->cvd_yn),
+      'prior_myocardial_infarctio' => new YesNoUnknown($record->prior_myocardial_infarctio),
+      'prior_coronary_artery_bypa' => new YesNoUnknown($record->prior_coronary_artery_bypa),
+      'prior_coronary_artery_bypa' => new YesNoUnknown($record->prior_coronary_artery_bypa),
+      'prior_percutaneous_coronar' => new YesNoUnknown($record->prior_percutaneous_coronar),
+      'renaldis'                   => new YesNoUnknown($record->renaldis_yn),
+      'liverdis'                   => new YesNoUnknown($record->liverdis_yn),
+      'immsupp'                    => new YesNoUnknown($record->immsupp_yn),
+      'hyp'                        => new YesNoUnknown($record->hyp_yn),
+      'hypertension'               => new YesNoUnknown($record->hypertension_yn),
+      'hiv'                        => new YesNoUnknown($record->hiv),
+      'cerebrovascular_disease'    => new YesNoUnknown($record->cerebrovascular_disease),
+      'prior_stroke'               => new YesNoUnknown($record->prior_stroke),
+      'obesity'                    => new YesNoUnknown($record->obesity),
+      'dyslipidemia'               => new YesNoUnknown($record->dyslipidemia),
+      'pregnant'                   => new YesNoUnknown($record->pregnant_yn),
+      'smoke_curr'                 => new YesNoUnknown($record->smoke_curr_yn),
+      'smoke_former'               => new YesNoUnknown($record->smoke_former_yn),
+      'has_other_disease'          => new YesNoUnknown($record->otherdis_yn),
       'other_disease'              => self::propertyOrNull($record, 'if_other_please_specify'),
-      'hba1c'                      => self::numberToYesNo($record->hba1c),
-      'hba1c_result'               => self::numberToYesNo($record->hba1c_result),
+      'hba1c'                      => new YesNoUnknown($record->hba1c),
+      'hba1c_result'               => self::propertyOrNull($record, 'hba1c_result'),
       'date_of_most_recent_hba1c'  => self::propertyOrNull($record, 'date_of_most_recent_hba1c')
     ];
 
-    $relevant_history = self::numberToYesNo($record->relevant_history, 2);
-
-    if ($relevant_history == 'yes') {
+    $relevant_history = new YesNoAlt($record->relevant_history);
+    if ($relevant_history == YesNoAlt::Yes) {
       $instance->relevant_history = [
         self::extractMedicalHistoryOther($record, 1),
         self::extractMedicalHistoryOther($record, 2),
@@ -280,22 +212,22 @@ class Patient
     }
 
     $instance->physical_exam = (object) [
-      'general_appearance'         => self::numberToExamination($record->general_appearance),
-      'lungs_chest'                => self::numberToExamination($record->lungs_chest),
-      'skin'                       => self::numberToExamination($record->skin),
-      'head_ears_eyes_nose_throat' => self::numberToExamination($record->head_ears_eyes_nose_throat),
-      'neck'                       => self::numberToExamination($record->neck),
-      'lymph_nodes'                => self::numberToExamination($record->lymph_nodes),
-      'genitourinary'              => self::numberToExamination($record->genitourinary),
-      'heart'                      => self::numberToExamination($record->heart),
-      'mouth'                      => self::numberToExamination($record->mouth),
-      'abdomen_gastrointestinal'   => self::numberToExamination($record->abdomen_gastrointestinal),
-      'extremities'                => self::numberToExamination($record->extremities),
-      'neurological'               => self::numberToExamination($record->neurological),
-      'musculoskeletal'            => self::numberToExamination($record->musculoskeletal),
-      'thyroid'                    => self::numberToExamination($record->thyroid),
-      'back_spinal'                => self::numberToExamination($record->back_spinal),
-      'external_genitalia'         => self::numberToExamination($record->external_genitalia),
+      'general_appearance'         => new Examination($record->general_appearance),
+      'lungs_chest'                => new Examination($record->lungs_chest),
+      'skin'                       => new Examination($record->skin),
+      'head_ears_eyes_nose_throat' => new Examination($record->head_ears_eyes_nose_throat),
+      'neck'                       => new Examination($record->neck),
+      'lymph_nodes'                => new Examination($record->lymph_nodes),
+      'genitourinary'              => new Examination($record->genitourinary),
+      'heart'                      => new Examination($record->heart),
+      'mouth'                      => new Examination($record->mouth),
+      'abdomen_gastrointestinal'   => new Examination($record->abdomen_gastrointestinal),
+      'extremities'                => new Examination($record->extremities),
+      'neurological'               => new Examination($record->neurological),
+      'musculoskeletal'            => new Examination($record->musculoskeletal),
+      'thyroid'                    => new Examination($record->thyroid),
+      'back_spinal'                => new Examination($record->back_spinal),
+      'external_genitalia'         => new Examination($record->external_genitalia),
       'comments'                   => self::propertyOrNull($record, 'comments'),
       'height'                     => self::propertyOrNull($record, 'height'),
       'weight'                     => self::propertyOrNull($record, 'weight_kg'),
@@ -318,42 +250,42 @@ class Patient
     }
 
     $instance->symptoms = (object) [
-      'status'               => self::numberToSymptomStatus($record->sympstatus),
+      'status'               => new SymptomStatus($record->sympstatus),
       'onset_date'           => self::propertyOrNull($record, 'onset_dt'),
       'onset_unknown'        => self::propertyOrNull($record, 'onset_unk'),
-      'resolution'           => self::numberToSymptomResolution($record->symp_res_yn),
+      'resolution'           => new SymptomResolutions($record->symp_res_yn),
       'resolution_date'      => self::propertyOrNull($record, 'symp_res_dt'),
-      'fever'                => self::numberToYesNo($record->fever_yn),
-      'subjective_fever'     => self::numberToYesNo($record->sfever_yn),
-      'chills'               => self::numberToYesNo($record->chills_yn),
-      'myalgia'              => self::numberToYesNo($record->myalgia_yn),
-      'runny_nose'           => self::numberToYesNo($record->runnose_yn),
-      'sore_throat'          => self::numberToYesNo($record->sthroat_yn),
-      'cough'                => self::numberToYesNo($record->cough_yn),
-      'sob'                  => self::numberToYesNo($record->sob_yn),
-      'nauseavomit'          => self::numberToYesNo($record->nauseavomit_yn),
-      'headache'             => self::numberToYesNo($record->headache_yn),
-      'abdom'                => self::numberToYesNo($record->abdom_yn),
-      'diarrhea'             => self::numberToYesNo($record->diarrhea_yn),
-      'anosmia'              => self::numberToYesNo($record->anosmia_yn),
-      'pneumonia'            => self::numberToYesNo($record->pna_yn),
-      'acute_resp_distress'  => self::numberToYesNo($record->acuterespdistress_yn),
+      'fever'                => new YesNoUnknown($record->fever_yn),
+      'subjective_fever'     => new YesNoUnknown($record->sfever_yn),
+      'chills'               => new YesNoUnknown($record->chills_yn),
+      'myalgia'              => new YesNoUnknown($record->myalgia_yn),
+      'runny_nose'           => new YesNoUnknown($record->runnose_yn),
+      'sore_throat'          => new YesNoUnknown($record->sthroat_yn),
+      'cough'                => new YesNoUnknown($record->cough_yn),
+      'sob'                  => new YesNoUnknown($record->sob_yn),
+      'nauseavomit'          => new YesNoUnknown($record->nauseavomit_yn),
+      'headache'             => new YesNoUnknown($record->headache_yn),
+      'abdom'                => new YesNoUnknown($record->abdom_yn),
+      'diarrhea'             => new YesNoUnknown($record->diarrhea_yn),
+      'anosmia'              => new YesNoUnknown($record->anosmia_yn),
+      'pneumonia'            => new YesNoUnknown($record->pna_yn),
+      'acute_resp_distress'  => new YesNoUnknown($record->acuterespdistress_yn),
       'ards_date'            => self::propertyOrNull($record, 'ards_date'),
       'ards_resolution_date' => self::propertyOrNull($record, 'ards_date1'),
-      'abxchest'             => self::numberToYesNo($record->abxchest_yn),
-      'hosp'                 => self::numberToYesNo($record->hosp_yn),
+      'abxchest'             => new YesNoUnknown($record->abxchest_yn),
+      'hosp'                 => new YesNoUnknown($record->hosp_yn),
       'admission_date'       => self::propertyOrNull($record, 'adm1_dt'),
-      'discharged'           => self::numberToYesNo($record->discharged),
+      'discharged'           => new YesNoNaUnknown($record->discharged),
       'discharged_date'      => self::propertyOrNull($record, 'dis1_dt'),
-      'icu'                  => self::numberToYesNo($record->icu_yn),
+      'icu'                  => new YesNoUnknown($record->icu_yn),
       'icu_date'             => self::propertyOrNull($record, 'icu_dt'),
       'icu_proned'           => self::propertyOrNull($record, 'was_the_patient_proned_in'),
       'icu_discharged'       => self::propertyOrNull($record, 'was_the_patient_discharged'),
       'icu_discharged_date'  => self::propertyOrNull($record, 'icu_dischaged'),
-      'mechvent'             => self::numberToYesNo($record->mechvent_yn),
+      'mechvent'             => new YesNoUnknown($record->mechvent_yn),
       'mechvent_dur'         => self::propertyOrNull($record, 'mechvent_dur'),
-      'ecmo'                 => self::numberToYesNo($record->ecmo_yn),
-      'death'                => self::numberToYesNo($record->death_yn),
+      'ecmo'                 => new YesNoUnknown($record->ecmo_yn),
+      'death'                => new YesNoUnknown($record->death_yn),
       'death_date'           => self::propertyOrNull($record, 'death_dt'),
       'death_date_unknown'   => self::propertyOrNull($record, 'death_dt') == '1' ? 'unknown' : null,
     ];
@@ -370,18 +302,18 @@ class Patient
     );
 
     $instance->affected_family_members = (object) [
-      'mother'        => self::numberToAffected($record->mother),
-      'father'        => self::numberToAffected($record->father),
-      'brother'       => self::numberToAffected($record->brother),
-      'sister'        => self::numberToAffected($record->sister),
-      'spouse'        => self::numberToAffected($record->spouse),
-      'child'         => self::numberToAffected($record->child),
-      'aunt'          => self::numberToAffected($record->aunt),
-      'uncle'         => self::numberToAffected($record->uncle),
-      'cousin'        => self::numberToAffected($record->cousin),
-      'grandmother'   => self::numberToAffected($record->grandmother),
-      'grandfather'   => self::numberToAffected($record->grandfather),
-      'grandchildren' => self::numberToAffected($record->grandchild_ren),
+      'mother'        => new Affected($record->mother),
+      'father'        => new Affected($record->father),
+      'brother'       => new Affected($record->brother),
+      'sister'        => new Affected($record->sister),
+      'spouse'        => new Affected($record->spouse),
+      'child'         => new Affected($record->child),
+      'aunt'          => new Affected($record->aunt),
+      'uncle'         => new Affected($record->uncle),
+      'cousin'        => new Affected($record->cousin),
+      'grandmother'   => new Affected($record->grandmother),
+      'grandfather'   => new Affected($record->grandfather),
+      'grandchildren' => new Affected($record->grandchild_ren),
     ];
 
     $instance->nasopharyngleal_swab_samples = [
@@ -404,7 +336,7 @@ class Patient
     ];
 
     $instance->case_report_form_patient_data_complete =
-      self::numberToCaseReportComplete($record->case_report_form_patient_data_complete);
+      new CaseReportComplete($record->case_report_form_patient_data_complete);
 
     return $instance;
   }
@@ -419,8 +351,6 @@ class Patient
 
     foreach ($data as $record) {
       $patient = self::fromStdClass($record);
-      self::dump('===> ', $patient);
-
       $patients[] = $patient;
     }
     return $patients;
