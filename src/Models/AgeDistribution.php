@@ -20,9 +20,9 @@ class AgeDistribution
   {
     $range = AgeRanges::getRangeForAge($patient->age);
 
-    if ($patient->testedPositive()) {
+    if ($patient->isCovid19Positive()) {
       $this->categories[$range['label']]->positiveCount++;
-    } else {
+    } else if ($patient->isCovid19Negative()) {
       $this->categories[$range['label']]->negativeCount++;
     }
   }

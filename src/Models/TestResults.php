@@ -39,6 +39,11 @@ class TestResults
    */
   public $positiveGenderByAge;
 
+  /**
+   * @var ResultsByWeek
+   */
+  public $resultsByWeek;
+
   public function __construct() {
     $this->ageDistribution = new AgeDistribution();
     $this->gender = new GenderReport();
@@ -48,6 +53,7 @@ class TestResults
 
     $this->asymptomaticComorbidity = new AsymptomaticComorbidity();
     $this->positiveGenderByAge = new PositiveGenderByAge();
+    $this->resultsByWeek = new ResultsByWeek();
   }
 
   /**
@@ -60,14 +66,15 @@ class TestResults
     $this->comorbidity->updateWithPatient($patient);
     $this->asymptomaticComorbidity->updateWithPatient($patient);
     $this->positiveGenderByAge->updateWithPatient($patient);
+    $this->resultsByWeek->updateWithPatient($patient);
 
-    if ($patient->testedPositive()) {
+    if ($patient->isCovid19Positive()) {
       if ($patient->symptomatic()) {
         $this->symptomatic->positiveCount++;
       } else {
         $this->asymptomatic->positiveCount++;
       }
-    } else {
+    } else if ($patient->isCovid19Negative()) {
       if ($patient->symptomatic()) {
         $this->symptomatic->negativeCount++;
       } else {

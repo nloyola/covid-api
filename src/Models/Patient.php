@@ -147,9 +147,16 @@ class Patient
     return $reduced;
   }
 
-  public function testedPositive(): bool {
+  public function swabTestedPositive(): bool {
     $filtered = array_filter($this->nasopharyngleal_swab_samples, function ($sample) {
       return $sample->result == SwabResults::Positive;
+    });
+    return count($filtered) > 0;
+  }
+
+  public function swabTestedNegative(): bool {
+    $filtered = array_filter($this->nasopharyngleal_swab_samples, function ($sample) {
+      return $sample->result == SwabResults::Negative;
     });
     return count($filtered) > 0;
   }

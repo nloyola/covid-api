@@ -141,9 +141,9 @@ class ComorbidityReport
   {
     foreach (Patient::$comorbidities as $key) {
       if ($patient->medical_history->{$key} == YesNo::Yes) {
-        if ($patient->testedPositive()) {
+        if ($patient->isCovid19Positive()) {
           $this->{$key}->positiveCount++;
-        } else {
+        } else if ($patient->isCovid19Negative()) {
           $this->{$key}->negativeCount++;
         }
       }

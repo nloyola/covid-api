@@ -33,7 +33,7 @@ class GenderReport
 
   public function updateWithPatient($patient)
   {
-    if ($patient->testedPositive()) {
+    if ($patient->isCovid19Positive()) {
       if ($patient->hasGenderMale()) {
         $this->male->positiveCount++;
       }
@@ -49,8 +49,7 @@ class GenderReport
       if ($patient->hasGenderUnknown()) {
         $this->unknown->positiveCount++;
       }
-    } else {
-
+    } else if ($patient->isCovid19Negative()) {
       if ($patient->hasGenderMale()) {
         $this->male->negativeCount++;
       }

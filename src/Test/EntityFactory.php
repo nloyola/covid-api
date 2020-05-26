@@ -39,35 +39,35 @@ class EntityFactory
     $instance->record_id          = $this->faker->swiftBicNumber();
     $instance->phn                = $this->faker->creditCardNumber();
     $instance->age                = $this->faker->numberBetween(0, 90);
-    $instance->current_status     = $this->faker->randomElement(TestStatus::validValues());
+    $instance->current_status     = $this->faker->randomElement(TestStatus::legalValues());
     $instance->testing_date       = $this->faker->dateTimeBetween('-90 days', '-80 days')->format('m-d-Y');
     $instance->positive_test_date = $this->faker->dateTimeBetween('-80 days', '-10 days')->format('m-d-Y');
-    $instance->sex                = $this->faker->randomElement(Gender::validValues());
+    $instance->sex                = $this->faker->randomElement(Gender::legalValues());
     $instance->bloodtype          = $this->faker->randomElement(['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-']);
 
     $instance->medical_history = (object) [
-      'cld'                        => $this->faker->randomElement(YesNo::validValues()),
-      'diabetes'                   => $this->faker->randomElement(YesNo::validValues()),
-      'cvd'                        => $this->faker->randomElement(YesNo::validValues()),
-      'prior_myocardial_infarctio' => $this->faker->randomElement(YesNo::validValues()),
-      'prior_coronary_artery_bypa' => $this->faker->randomElement(YesNo::validValues()),
-      'prior_coronary_artery_bypa' => $this->faker->randomElement(YesNo::validValues()),
-      'prior_percutaneous_coronar' => $this->faker->randomElement(YesNo::validValues()),
-      'renaldis'                   => $this->faker->randomElement(YesNo::validValues()),
-      'liverdis'                   => $this->faker->randomElement(YesNo::validValues()),
-      'immsupp'                    => $this->faker->randomElement(YesNo::validValues()),
-      'hyp'                        => $this->faker->randomElement(YesNo::validValues()),
-      'hypertension'               => $this->faker->randomElement(YesNo::validValues()),
-      'hiv'                        => $this->faker->randomElement(YesNo::validValues()),
-      'cerebrovascular_disease'    => $this->faker->randomElement(YesNo::validValues()),
-      'prior_stroke'               => $this->faker->randomElement(YesNo::validValues()),
-      'obesity'                    => $this->faker->randomElement(YesNo::validValues()),
-      'dyslipidemia'               => $this->faker->randomElement(YesNo::validValues()),
-      'pregnant'                   => $this->faker->randomElement(YesNo::validValues()),
-      'smoke_curr'                 => $this->faker->randomElement(YesNo::validValues()),
-      'smoke_former'               => $this->faker->randomElement(YesNo::validValues()),
-      'has_other_disease'          => $this->faker->randomElement(YesNo::validValues()),
-      'hba1c'                      => $this->faker->randomElement(YesNo::validValues()),
+      'cld'                        => $this->faker->randomElement(YesNo::legalValues()),
+      'diabetes'                   => $this->faker->randomElement(YesNo::legalValues()),
+      'cvd'                        => $this->faker->randomElement(YesNo::legalValues()),
+      'prior_myocardial_infarctio' => $this->faker->randomElement(YesNo::legalValues()),
+      'prior_coronary_artery_bypa' => $this->faker->randomElement(YesNo::legalValues()),
+      'prior_coronary_artery_bypa' => $this->faker->randomElement(YesNo::legalValues()),
+      'prior_percutaneous_coronar' => $this->faker->randomElement(YesNo::legalValues()),
+      'renaldis'                   => $this->faker->randomElement(YesNo::legalValues()),
+      'liverdis'                   => $this->faker->randomElement(YesNo::legalValues()),
+      'immsupp'                    => $this->faker->randomElement(YesNo::legalValues()),
+      'hyp'                        => $this->faker->randomElement(YesNo::legalValues()),
+      'hypertension'               => $this->faker->randomElement(YesNo::legalValues()),
+      'hiv'                        => $this->faker->randomElement(YesNo::legalValues()),
+      'cerebrovascular_disease'    => $this->faker->randomElement(YesNo::legalValues()),
+      'prior_stroke'               => $this->faker->randomElement(YesNo::legalValues()),
+      'obesity'                    => $this->faker->randomElement(YesNo::legalValues()),
+      'dyslipidemia'               => $this->faker->randomElement(YesNo::legalValues()),
+      'pregnant'                   => $this->faker->randomElement(YesNo::legalValues()),
+      'smoke_curr'                 => $this->faker->randomElement(YesNo::legalValues()),
+      'smoke_former'               => $this->faker->randomElement(YesNo::legalValues()),
+      'has_other_disease'          => $this->faker->randomElement(YesNo::legalValues()),
+      'hba1c'                      => $this->faker->randomElement(YesNo::legalValues()),
       'hba1c_result'               => $this->faker->numberBetween(0, 100) / 100.0,
       'date_of_most_recent_hba1c'  => $this->faker->dateTimeBetween('-70 days')->format('m-d-Y'),
     ];
@@ -77,7 +77,7 @@ class EntityFactory
     }
 
     $instance->relevant_history = [];
-    $relevant_history = $this->faker->randomElement(YesNo::validValues());
+    $relevant_history = $this->faker->randomElement(YesNo::legalValues());
 
     if ($relevant_history == 'yes') {
       for ($i = 0; $i < $this->faker->numberBetween(0, 5); $i++) {
@@ -86,22 +86,22 @@ class EntityFactory
     }
 
     $instance->physical_exam = (object) [
-      'general_appearance'         => $this->faker->randomElement(Examination::validValues()),
-      'lungs_chest'                => $this->faker->randomElement(Examination::validValues()),
-      'skin'                       => $this->faker->randomElement(Examination::validValues()),
-      'head_ears_eyes_nose_throat' => $this->faker->randomElement(Examination::validValues()),
-      'neck'                       => $this->faker->randomElement(Examination::validValues()),
-      'lymph_nodes'                => $this->faker->randomElement(Examination::validValues()),
-      'genitourinary'              => $this->faker->randomElement(Examination::validValues()),
-      'heart'                      => $this->faker->randomElement(Examination::validValues()),
-      'mouth'                      => $this->faker->randomElement(Examination::validValues()),
-      'abdomen_gastrointestinal'   => $this->faker->randomElement(Examination::validValues()),
-      'extremities'                => $this->faker->randomElement(Examination::validValues()),
-      'neurological'               => $this->faker->randomElement(Examination::validValues()),
-      'musculoskeletal'            => $this->faker->randomElement(Examination::validValues()),
-      'thyroid'                    => $this->faker->randomElement(Examination::validValues()),
-      'back_spinal'                => $this->faker->randomElement(Examination::validValues()),
-      'external_genitalia'         => $this->faker->randomElement(Examination::validValues()),
+      'general_appearance'         => $this->faker->randomElement(Examination::legalValues()),
+      'lungs_chest'                => $this->faker->randomElement(Examination::legalValues()),
+      'skin'                       => $this->faker->randomElement(Examination::legalValues()),
+      'head_ears_eyes_nose_throat' => $this->faker->randomElement(Examination::legalValues()),
+      'neck'                       => $this->faker->randomElement(Examination::legalValues()),
+      'lymph_nodes'                => $this->faker->randomElement(Examination::legalValues()),
+      'genitourinary'              => $this->faker->randomElement(Examination::legalValues()),
+      'heart'                      => $this->faker->randomElement(Examination::legalValues()),
+      'mouth'                      => $this->faker->randomElement(Examination::legalValues()),
+      'abdomen_gastrointestinal'   => $this->faker->randomElement(Examination::legalValues()),
+      'extremities'                => $this->faker->randomElement(Examination::legalValues()),
+      'neurological'               => $this->faker->randomElement(Examination::legalValues()),
+      'musculoskeletal'            => $this->faker->randomElement(Examination::legalValues()),
+      'thyroid'                    => $this->faker->randomElement(Examination::legalValues()),
+      'back_spinal'                => $this->faker->randomElement(Examination::legalValues()),
+      'external_genitalia'         => $this->faker->randomElement(Examination::legalValues()),
       'comments'                   => $this->faker->words(5, true),
       'height'                     => $this->faker->numberBetween(80, 200),
       'weight'                     => $this->faker->numberBetween(60, 200),
@@ -116,42 +116,42 @@ class EntityFactory
       $instance->concomitant_medications[] = (object) [
         'name'            => $this->faker->words(5, true),
         'indication'      => $this->faker->words(5, true),
-        'resp_complaint'  => $this->faker->randomElement(YesNo::validValues()),
+        'resp_complaint'  => $this->faker->randomElement(YesNo::legalValues()),
         'dose_amt'        => $this->faker->numberBetween(20, 100),
-        'dose_unit'       => $this->faker->randomElement(DoseUnits::validValues()),
-        'dose_route'      => $this->faker->randomElement(DoseRoutes::validValues()),
-        'dose_frequency'  => $this->faker->randomElement(DoseFrequencies::validValues()),
+        'dose_unit'       => $this->faker->randomElement(DoseUnits::legalValues()),
+        'dose_route'      => $this->faker->randomElement(DoseRoutes::legalValues()),
+        'dose_frequency'  => $this->faker->randomElement(DoseFrequencies::legalValues()),
         'dose_start_date' => $this->faker->dateTimeBetween('-70 days')->format('m-d-Y'),
-        'dose_stop_check' => $this->faker->randomElement(YesNo::validValues()),
+        'dose_stop_check' => $this->faker->randomElement(YesNo::legalValues()),
         'dose_stop_date'  => $this->faker->dateTimeBetween('-60 days')->format('m-d-Y'),
       ];
     }
 
     $instance->symptoms = (object) [
-      'status'               => $this->faker->randomElement(SymptomStatus::validValues()),
-      'resolution'           => $this->faker->randomElement(SymptomResolutions::validValues()),
+      'status'               => $this->faker->randomElement(SymptomStatus::legalValues()),
+      'resolution'           => $this->faker->randomElement(SymptomResolutions::legalValues()),
       'resolution_date'      => $this->faker->dateTimeBetween('-70 days')->format('m-d-Y'),
-      'fever'                => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'subjective_fever'     => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'chills'               => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'myalgia'              => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'runny_nose'           => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'sore_throat'          => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'cough'                => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'sob'                  => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'nauseavomit'          => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'headache'             => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'abdom'                => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'diarrhea'             => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'anosmia'              => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'pneumonia'            => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'acute_resp_distress'  => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'abxchest'             => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'hosp'                 => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'discharged'           => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'icu'                  => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'mechvent'             => $this->faker->randomElement(YesNoUnknown::validValues()),
-      'death'                => $this->faker->randomElement(YesNoUnknown::validValues()),
+      'fever'                => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'subjective_fever'     => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'chills'               => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'myalgia'              => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'runny_nose'           => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'sore_throat'          => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'cough'                => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'sob'                  => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'nauseavomit'          => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'headache'             => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'abdom'                => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'diarrhea'             => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'anosmia'              => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'pneumonia'            => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'acute_resp_distress'  => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'abxchest'             => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'hosp'                 => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'discharged'           => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'icu'                  => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'mechvent'             => $this->faker->randomElement(YesNoUnknown::legalValues()),
+      'death'                => $this->faker->randomElement(YesNoUnknown::legalValues()),
     ];
 
     $onset_unknown = $this->faker->randomElement([ '', 'unknown']);
@@ -175,8 +175,8 @@ class EntityFactory
     if ($instance->symptoms->icu == 'yes') {
       $instance->symptoms->icu_date = $this->faker->dateTimeBetween('-50 days')->format('m-d-Y');
       $instance->symptoms->icu_proned = $this->faker->words(5, true);
-      $instance->symptoms->icu_discharged = $this->faker->randomElement(YesNoUnknown::validValues());
-      $instance->symptoms->ecmo = $this->faker->randomElement(YesNoUnknown::validValues());
+      $instance->symptoms->icu_discharged = $this->faker->randomElement(YesNoUnknown::legalValues());
+      $instance->symptoms->ecmo = $this->faker->randomElement(YesNoUnknown::legalValues());
 
       if ($instance->symptoms->discharged == 'yes') {
         $instance->symptoms->icu_discharged_date = $this->faker->dateTimeBetween('-50 days')->format('m-d-Y');
@@ -203,18 +203,18 @@ class EntityFactory
 
 
     $instance->affected_family_members = (object) [
-      'mother'        => $this->faker->randomElement(Affected::validValues()),
-      'father'        => $this->faker->randomElement(Affected::validValues()),
-      'brother'       => $this->faker->randomElement(Affected::validValues()),
-      'sister'        => $this->faker->randomElement(Affected::validValues()),
-      'spouse'        => $this->faker->randomElement(Affected::validValues()),
-      'child'         => $this->faker->randomElement(Affected::validValues()),
-      'aunt'          => $this->faker->randomElement(Affected::validValues()),
-      'uncle'         => $this->faker->randomElement(Affected::validValues()),
-      'cousin'        => $this->faker->randomElement(Affected::validValues()),
-      'grandmother'   => $this->faker->randomElement(Affected::validValues()),
-      'grandfather'   => $this->faker->randomElement(Affected::validValues()),
-      'grandchildren' => $this->faker->randomElement(Affected::validValues()),
+      'mother'        => $this->faker->randomElement(Affected::legalValues()),
+      'father'        => $this->faker->randomElement(Affected::legalValues()),
+      'brother'       => $this->faker->randomElement(Affected::legalValues()),
+      'sister'        => $this->faker->randomElement(Affected::legalValues()),
+      'spouse'        => $this->faker->randomElement(Affected::legalValues()),
+      'child'         => $this->faker->randomElement(Affected::legalValues()),
+      'aunt'          => $this->faker->randomElement(Affected::legalValues()),
+      'uncle'         => $this->faker->randomElement(Affected::legalValues()),
+      'cousin'        => $this->faker->randomElement(Affected::legalValues()),
+      'grandmother'   => $this->faker->randomElement(Affected::legalValues()),
+      'grandfather'   => $this->faker->randomElement(Affected::legalValues()),
+      'grandchildren' => $this->faker->randomElement(Affected::legalValues()),
     ];
 
     $instance->nasopharyngleal_swab_samples = [];

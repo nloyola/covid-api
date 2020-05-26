@@ -23,7 +23,7 @@ class PositiveGenderByAge
   {
     $range = AgeRanges::getRangeForAge($patient->age);
 
-    if ($patient->testedPositive()) {
+    if ($patient->isCovid19Positive()) {
       foreach (Gender::legalValues() as $gender) {
         if ($patient->hasGender($gender)) {
           $this->categories[$range['label']][$gender['label']]++;
